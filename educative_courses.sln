@@ -5,6 +5,12 @@ VisualStudioVersion = 16.0.31025.194
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "educative_courses", "educative_courses\educative_courses.vcxproj", "{1B1B9D13-ECB1-40B8-9A85-2B1866B4E8AF}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "path_cpp", "path_cpp", "{6A8EAB81-B604-42BA-BA46-F9F2677C42D3}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "path_cpp", "path_cpp\path_cpp.vcxproj", "{3467783C-9BDF-456F-A024-4B57D7A18568}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cpp_basics_01", "cpp_basics_01\cpp_basics_01.vcxproj", "{4D9150DE-40AA-48A7-A44A-11ED38E27308}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,9 +27,29 @@ Global
 		{1B1B9D13-ECB1-40B8-9A85-2B1866B4E8AF}.Release|x64.Build.0 = Release|x64
 		{1B1B9D13-ECB1-40B8-9A85-2B1866B4E8AF}.Release|x86.ActiveCfg = Release|Win32
 		{1B1B9D13-ECB1-40B8-9A85-2B1866B4E8AF}.Release|x86.Build.0 = Release|Win32
+		{3467783C-9BDF-456F-A024-4B57D7A18568}.Debug|x64.ActiveCfg = Debug|x64
+		{3467783C-9BDF-456F-A024-4B57D7A18568}.Debug|x64.Build.0 = Debug|x64
+		{3467783C-9BDF-456F-A024-4B57D7A18568}.Debug|x86.ActiveCfg = Debug|Win32
+		{3467783C-9BDF-456F-A024-4B57D7A18568}.Debug|x86.Build.0 = Debug|Win32
+		{3467783C-9BDF-456F-A024-4B57D7A18568}.Release|x64.ActiveCfg = Release|x64
+		{3467783C-9BDF-456F-A024-4B57D7A18568}.Release|x64.Build.0 = Release|x64
+		{3467783C-9BDF-456F-A024-4B57D7A18568}.Release|x86.ActiveCfg = Release|Win32
+		{3467783C-9BDF-456F-A024-4B57D7A18568}.Release|x86.Build.0 = Release|Win32
+		{4D9150DE-40AA-48A7-A44A-11ED38E27308}.Debug|x64.ActiveCfg = Debug|x64
+		{4D9150DE-40AA-48A7-A44A-11ED38E27308}.Debug|x64.Build.0 = Debug|x64
+		{4D9150DE-40AA-48A7-A44A-11ED38E27308}.Debug|x86.ActiveCfg = Debug|Win32
+		{4D9150DE-40AA-48A7-A44A-11ED38E27308}.Debug|x86.Build.0 = Debug|Win32
+		{4D9150DE-40AA-48A7-A44A-11ED38E27308}.Release|x64.ActiveCfg = Release|x64
+		{4D9150DE-40AA-48A7-A44A-11ED38E27308}.Release|x64.Build.0 = Release|x64
+		{4D9150DE-40AA-48A7-A44A-11ED38E27308}.Release|x86.ActiveCfg = Release|Win32
+		{4D9150DE-40AA-48A7-A44A-11ED38E27308}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{3467783C-9BDF-456F-A024-4B57D7A18568} = {6A8EAB81-B604-42BA-BA46-F9F2677C42D3}
+		{4D9150DE-40AA-48A7-A44A-11ED38E27308} = {6A8EAB81-B604-42BA-BA46-F9F2677C42D3}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A3E1B7DC-783A-4961-9ADE-60577582785F}
