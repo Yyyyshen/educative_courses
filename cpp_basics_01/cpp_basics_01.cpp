@@ -289,10 +289,150 @@ int Fibonacci(int n) {
 }
 /**
  * 数组
+ * 二维数组（初始化必须指定列数）
  */
+void left_rotate(int arr[], int size) { //数组传值后是引用而不是拷贝，有时直接传指针
+	//左旋数组
+	// Declares a loop counter variable
+	int j;
+	// Store the element at index 0
+	int temp = arr[0];
+	// Traverse array
+	for (j = 0; j < size - 1; j++) {
+		// Left Shift element
+		arr[j] = arr[j + 1];
+	}
+	// Store the value of temp at the last index of an array 
+	arr[j] = temp;
+
+}
+//递归分治快排
+void re_sort(int arr[], int begin, int end) {
+	if (begin == end)
+	{
+		return;
+	}
+	int i = begin, j = end, key = arr[begin];
+	while (i < j) {
+
+		while (i < j && arr[j] < key) {
+			j--;
+		}
+		if (i < j) {
+			arr[i] = arr[j];
+			i++;
+		}
+		while (i < j && arr[i] > key) {
+			i++;
+		}
+		if (i < j) {
+			arr[j] = arr[i];
+			j--;
+		}
+
+		arr[i] = key;
+		re_sort(arr, begin, i - 1);
+		re_sort(arr, i + 1, end);
+	}
+}
+//降序排列，递归
+void sort_elements_re(int arr[], int size) {
+	// Write your code here
+	re_sort(arr, 0, size - 1);
+}
+//暴力排序，每此循环将之后元素最大值放到当前位置
+void sort_elements(int arr[], int size) {
+	// Outer loop
+	for (int i = 0; i < size; i++) {
+		// Inner loop
+		for (int j = i + 1; j < size; j++) {
+			// If condition
+			if (arr[i] < arr[j]) {
+				// Swap elements
+				// Store the value at index j in temp
+				int temp = arr[j];
+				// Store the value at index i at index j
+				arr[j] = arr[i];
+				// Store the value of temp at index i
+				arr[i] = temp;
+			}
+		}
+	}
+}
+/**
+ * 指针
+ * 编译器将每个变量名映射到内存中的唯一地址
+ */
+void passPointer(int* number) {
+	int value = 13;
+	number = &value;
+	*number = *number - 10;
+	cout << *number << endl; //3
+}
+void test_point() {
+	int num = 0, * pnum;//要声明为指针才能存储变量地址，而不能直接用int变量存储地址
+	pnum = &num;
+	int num2 = *pnum;//取值
+
+	int* numPtr;
+	double num3;
+	//numPtr = &num3; //指针类型要与值类型相同
+
+	//传参
+	int val = 10, * pval;
+	pval = &val;
+	passPointer(pval);//指针按值传递，不会真正改变指针
+	cout << *pval; //10
+}
+/**
+ * 动态分配内存
+ * 静态内存为编译器在编译期自动分配好的，动态则相反
+ * 使用new和delete，由编程者手动创建及删除
+ */
+void test_allocmemory() {
+	int* pint = new int;
+	delete pint;
+	int* arr = new int[5];
+	delete[] arr;//数组删除格式
+}
+//删除数组中指定索引元素
+void delete_element(int*& arr, int size, int index) {
+	// Declare new array dynamically
+	int* new_arr = new int[size - 1];
+	// Traverse array
+	for (int i = 0; i < size - 1; i++) {
+		// 
+		if (i == index || i > index) {
+			new_arr[i] = arr[i + 1];
+		}
+		else {
+			// Copy elements in new array
+			new_arr[i] = arr[i];
+
+		}
+	}
+	// Free memory pointed out by arr
+	delete[] arr;
+	// Pointer arr will point to new_arr
+	arr = new_arr;
+	//return arr;
+}
+/**
+ * 结构体
+ */
+typedef struct Student_ {
+	string name;
+	int roll_number;
+	int marks;
+}Student, * PStudent;
+void test_struct() {
+	Student s1 = { "Yshen",1,100 };
+	PStudent ps1 = &s1;
+}
 
 int main()
 {
 	//test_0();
-	test_makeLambda();
+	//test_makeLambda();
+	test_point();
 }
