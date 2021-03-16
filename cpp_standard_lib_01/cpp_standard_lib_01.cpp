@@ -438,7 +438,110 @@ auto globShared = std::make_shared<Widget>(2011);   // (1)全局共享指针
 void test_R37() {
 	shared(globShared);
 }
+/**
+ * 类型特征库
+ * 使用该库的原因：
+ * 优化，类型特征库具有自省功能，因此可以自动选择速度更快的代码。
+ * 正确性，可以指定代码要求，这些要求在编译时进行检查。
+ *
+ * 类型特征库和函数static_assert是强大的组合。
+ * 一方面，类型特征库的功能在编译时提供类型信息。另一方面，static_assert函数在编译时检查给定的信息。所有这些对于程序运行时都是透明的：
+ * 在模板中提过，简单过一下
+ */
+#include <type_traits>
+template <typename T> T fac(T a) {
+	static_assert(std::is_integral<T>::value, "T not integral");
+	//...
+}
+void test_traits() {
+	//fac(10.1);	// compile error: with T= double; T not integral
+}
+/**
+ * 时间库
+ */
+void test_time()
+{
+	//性能测试
+	std::vector<int> myBigVec(10000000, 2011);
+	std::vector<int> myEmptyVec1;
 
+	auto begin = std::chrono::high_resolution_clock::now();
+	myEmptyVec1 = myBigVec;
+	auto end = std::chrono::high_resolution_clock::now() - begin;
+
+	auto timeInSeconds = std::chrono::duration<double>(end).count();
+	std::cout << timeInSeconds << std::endl; // 0.0150688800 <- may vary from execution to execution
+}
+/**
+ * std :: any
+ * C++17允许我们将值放在一个安全的容器中，只有指定其类型时才能访问该容器。
+ * 数据类型std::any，std::optional和std::variant都基于Boost库
+ */
+#include <any>
+struct MyClass {};
+void test_any() {
+	std::vector<std::any> anyVec{ true, 2017, std::string("test"), 3.14,  MyClass() };
+	std::cout << std::any_cast<bool>(anyVec[0]) << endl;                          // true
+	int myInt = std::any_cast<int>(anyVec[1]);
+	std::cout << myInt << std::endl << endl;                                      // 2017
+	//要获取其元素之一，必须使用std :: any_cast。如果使用了错误的类型，将得到一个std::bad_any_cast异常。
+	std::cout << anyVec[0].type().name() << endl;                                 // b 
+	std::cout << anyVec[1].type().name();                                 // i
+}
+//当对象的值可以为null或为空时，std::optional非常方便。
+//在C++17之前，通常的做法是使用特殊值（例如空指针，空字符串或唯一整数）来表示缺少结果。
+//这些特殊值或无结果很容易出错，因为必须滥用类型系统来检查返回值。这意味着对于类型系统，必须使用常规值（例如空字符串）来定义不规则值。
+#include <optional>
+std::optional<int> getFirst(const std::vector<int>& vec) {
+	if (!vec.empty()) return std::optional<int>(vec[0]);
+	else return std::optional<int>();
+}
+void test_optional() {
+	std::vector<int> myVec{ 1, 2, 3 };
+	std::vector<int> myEmptyVec;
+
+	auto myInt = getFirst(myVec);
+
+	if (myInt) {
+		std::cout << *myInt << std::endl;                       // 1
+		std::cout << myInt.value() << std::endl;                // 1
+		std::cout << myInt.value_or(2017) << std::endl;         // 1，值存在
+	}
+
+	auto myEmptyInt = getFirst(myEmptyVec);
+
+	if (!myEmptyInt) {
+		std::cout << myEmptyInt.value_or(2017) << std::endl;   // 2017，值不存在，返回默认值
+	}
+}
+//std::variant
+#include <variant>
+#include <string>
+#include <cassert>
+void test_variant() {
+	std::variant<int, float> v, w;
+	v = 12; // v contains int
+	int i = std::get<int>(v);
+	w = std::get<int>(v);
+	w = std::get<0>(v); // same effect as the previous line
+	w = v; // same effect as the previous line
+
+//  std::get<double>(v); // error: no double in [int, float]
+//  std::get<3>(v);      // error: valid index values are 0 and 1
+
+	try {
+		std::get<float>(w); // w contains int, not float: will throw
+	}
+	catch (const std::bad_variant_access&) {}
+
+	std::variant<std::string> x("abc"); // converting constructors work when unambiguous
+	x = "def"; // converting assignment also works when unambiguous
+
+	std::variant<std::string, bool> y("abc"); // casts to bool when passed a char const *
+	assert(std::holds_alternative<bool>(y)); // succeeds
+	y = "xyz"s;
+	assert(std::holds_alternative<std::string>(y)); //succeeds
+}
 
 int main()
 {
