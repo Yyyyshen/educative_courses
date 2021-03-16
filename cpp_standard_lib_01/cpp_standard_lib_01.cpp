@@ -233,6 +233,211 @@ void test_ref() {
 	doubleMe(std::ref(i));
 	std::cout << i << std::endl;   // 2
 }
+/**
+ * 智能指针
+ * 根据RAII习惯用法管理其资源。因此，如果智能指针超出范围，资源将自动释放。
+ * (RAII:C ++中的一种流行技术，其中资源获取和释放与对象的生存期绑定。
+ * 对于智能指针，这意味着内存在构造函数中分配，并在析构函数中释放。当对象超出范围时将调用析构函数。)
+ *
+ * std::unique_ptr
+ * 独占资源，无法拷贝
+ *
+ * std::shared_ptr
+ * 具有共享变量的参考计数器。自动管理参考计数器。如果引用计数器为0，则删除资源。
+ *
+ * std::weak_ptr
+ * 帮助中断std :: shared_ptr的周期。不修改参考计数器。
+ *
+ */
+#include <iomanip>
+class MyStruct {
+public:
+	MyStruct() {
+		std::cout << std::setw(15) << std::left << (void*)this << " Hello " << std::endl;
+	}
+	~MyStruct() {
+		std::cout << std::setw(15) << std::left << (void*)this << " Good Bye " << std::endl;
+	}
+};
+void test_unique_ptr() {
+
+	std::unique_ptr<int> uniqInt(new int(2011));
+	std::cout << "*uniqInt: " << *uniqInt << std::endl;
+	std::cout << std::endl;
+	//大括号测试生命周期
+	{
+		std::unique_ptr<MyStruct[]> myUniqueArray{ new MyStruct[5] };
+	}
+	std::cout << std::endl;
+
+	{
+		std::unique_ptr<MyStruct[]> myUniqueArray{ new MyStruct[1] };
+		MyStruct myStruct;
+		myUniqueArray[0] = myStruct;
+	}
+	std::cout << std::endl;
+
+	{
+		std::unique_ptr<MyStruct[]> myUniqueArray{ new MyStruct[1] };
+		MyStruct myStruct;
+		myStruct = myUniqueArray[0];
+	}
+	std::cout << std::endl;
+}
+//std::shared_ptr
+//有两个句柄：一个用于资源，另一个用于引用计数器。
+//通过复制shared_ptr，引用计数将增加一。如果shared_ptr超出范围，则减少1。
+//如果引用计数器的值为0，则C++运行时会自动释放资源，因为不再有引用该资源的shared_ptr。
+//当最后一个std :: shared_ptr超出范围时，才发生资源释放。 
+//C++运行时保证引用计数器的调用是原子操作。由于这种管理，shared_ptr比原始指针或unique_ptr消耗更多的时间和内存。
+class ShareMe : public std::enable_shared_from_this<ShareMe> {
+public:
+	std::shared_ptr<ShareMe> getShared() {
+		return shared_from_this();
+	}
+};
+void test_shared_ptr() {
+	std::shared_ptr<ShareMe> shareMe(new ShareMe);
+	std::shared_ptr<ShareMe> shareMe1 = shareMe->getShared();
+	{
+		auto shareMe2(shareMe1);
+		std::cout << "shareMe.use_count(): " << shareMe.use_count() << std::endl; //3
+	}
+	std::cout << "shareMe.use_count(): " << shareMe.use_count() << std::endl; //2
+	shareMe1.reset();
+	std::cout << "shareMe.use_count(): " << shareMe.use_count() << std::endl; //1
+}
+//std::weak_ptr
+void test_weak_ptr() {
+	std::cout << std::boolalpha << std::endl;
+
+	auto sharedPtr = std::make_shared<int>(2011);
+	std::weak_ptr<int> weakPtr(sharedPtr);
+	std::cout << "weakPtr.use_count(): " << weakPtr.use_count() << std::endl;
+	std::cout << "sharedPtr.use_count(): " << sharedPtr.use_count() << std::endl;
+	std::cout << "weakPtr.expired(): " << weakPtr.expired() << std::endl; //检查是否已删除资源
+
+	if (std::shared_ptr<int> sharedPtr1 = weakPtr.lock()) { //创建一个shared_ptr在资源上
+		std::cout << "*sharedPtr: " << *sharedPtr << std::endl;
+		std::cout << "sharedPtr1.use_count(): " << sharedPtr1.use_count() << std::endl; //2
+	}
+	else {
+		std::cout << "Don't get the resource!" << std::endl;
+	}
+
+	weakPtr.reset();
+	if (std::shared_ptr<int> sharedPtr1 = weakPtr.lock()) {
+		std::cout << "*sharedPtr: " << *sharedPtr << std::endl;
+		std::cout << "sharedPtr1.use_count(): " << sharedPtr1.use_count() << std::endl;
+	}
+	else {
+		std::cout << "Don't get the resource!" << std::endl;
+	}
+}
+//cyclic references
+//shared_ptr有可能发生循环引用，可以使用weak_ptr打破
+struct Son;
+struct Daughter;
+struct Mother {
+	~Mother() {
+		std::cout << "Mother gone" << std::endl;
+	}
+	void setSon(const std::shared_ptr<Son> s) {
+		mySon = s;
+	}
+	void setDaughter(const std::shared_ptr<Daughter> d) {
+		myDaughter = d;
+	}
+	std::shared_ptr<const Son> mySon;
+	std::weak_ptr<const Daughter> myDaughter;//这里用了weak_ptr
+};
+struct Son {
+	Son(std::shared_ptr<Mother> m) :myMother(m) {}
+	~Son() {
+		std::cout << "Son gone" << std::endl;
+	}
+	std::shared_ptr<const Mother> myMother;
+};
+struct Daughter {
+	Daughter(std::shared_ptr<Mother> m) :myMother(m) {}
+	~Daughter() {
+		std::cout << "Daughter gone" << std::endl;
+	}
+	std::shared_ptr<const Mother> myMother;
+};
+void test_cycle_ref() {
+	std::cout << std::endl;
+	{
+		std::shared_ptr<Mother> mother = std::shared_ptr<Mother>(new Mother);
+		std::shared_ptr<Son> son = std::shared_ptr<Son>(new Son(mother));
+		std::shared_ptr<Daughter> daughter = std::shared_ptr<Daughter>(new Daughter(mother));
+		mother->setSon(son);
+		mother->setDaughter(daughter);
+	}
+	std::cout << std::endl;
+	//最终结果只输出了daughter的析构函数，因为mother和son发生了循环引用，而同样写法的daughter由于用了weak_ptr产生了不同的结果
+}
+//对比测试性能
+#include <chrono>
+#include <memory>
+static const long long numInt = 100000000;
+void test_ptrs() {
+	auto start = std::chrono::system_clock::now();
+	for (long long i = 0; i < numInt; ++i) {
+		//int* tmp(new int(i));											//2s+
+		//delete tmp;
+		// std::shared_ptr<int> tmp(new int(i));						//12s+
+		// std::shared_ptr<int> tmp(std::make_shared<int>(i));			//28s+
+		// std::unique_ptr<int> tmp(new int(i));						//7s+
+		//std::unique_ptr<int> tmp(std::make_unique<int>(i));			//8s+
+	}
+	std::chrono::duration<double> dur = std::chrono::system_clock::now() - start;
+	std::cout << "time make_unique: " << dur.count() << " seconds" << std::endl;
+}
+//传递智能指针的几条规则
+//R.32：取一个unique_ptr<widget>参数来表示一个函数假定了一个小部件的所有权
+struct Widget {
+	Widget(int) {}
+};
+void sink(std::unique_ptr<Widget> uniqPtr) {
+	// do something with uniqPtr
+}
+void test_R32() {
+	auto uniqPtr = std::make_unique<Widget>(1998);
+
+	sink(std::move(uniqPtr));      // (1)
+	//sink(uniqPtr);                 // (2) ERROR
+}
+//R.33: Take a unique_ptr<widget>& parameter to express that a function reseats the widget.
+void reseat(std::unique_ptr<Widget>& uniqPtr) {
+	uniqPtr.reset(new Widget(2003));   // (0)
+	// do something with uniqPtr
+}
+void test_R33() {
+	auto uniqPtr = std::make_unique<Widget>(1998);
+
+	//reseat(std::move(uniqPtr));       // (1) ERROR
+	reseat(uniqPtr);                  // (2) 
+}
+//R.34: Take a shared_ptr<widget> parameter to express that a function is part owner.
+//R.35: Take a shared_ptr<widget>&parameter to express that a function might reseat the shared pointer.
+//R.36 : Take a const shared_ptr<widget>&parameter to express that it might retain a reference count to the object.
+void share(std::shared_ptr<Widget> shaWid);//在函数正文的生存期内，此方法是Widget的共享所有者。在功能主体开始时，我们将增加参考计数器；在函数结束时，我们将减少参考计数器；因此，只要我们使用它，小部件就会保持活动状态。
+void reset(std::shared_ptr<Widget>& shadWid);//此函数不是窗口小部件的共享所有者，因为我们不会更改参考计数器。我们无法保证Widget在函数执行期间会保持活动状态，但是我们可以重新放置资源。非常量左值引用更像是借用了具有重新安置能力的资源。
+void mayShare(const std::shared_ptr<Widget>& shaWid);//此函数仅借用资源。我们既不能延长资源的寿命，也不能重新安置资源。老实说，我们应该改用指针（Widget *）或引用（Widget＆）作为参数，因为使用std :: shared_ptr不会增加任何价值。
+//R.37: Do not pass a pointer or reference obtained from an aliased smart pointer.
+void oldFunc(Widget wid) {
+	// do something with wid
+}
+void shared(std::shared_ptr<Widget>& shaPtr) {       // (2)通过引用传递参数，则不会增加引用计数
+	auto keepAlive = shaPtr;//增加引用计数，保证在oldFunc中的可用性（就像在使用asio写网络服务时时，经常需要auto self(shared_from_this());让lambda表达式捕获self）
+	oldFunc(*shaPtr);                                // (3)由于没有增加引用计数，无法保证传递过去的参数有效；解决方案是拷贝，保证引用计数增加、或者在传参时拷贝
+	// do something with shaPtr
+}
+auto globShared = std::make_shared<Widget>(2011);   // (1)全局共享指针
+void test_R37() {
+	shared(globShared);
+}
 
 
 int main()
