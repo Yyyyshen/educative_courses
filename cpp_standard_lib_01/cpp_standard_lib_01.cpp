@@ -542,6 +542,42 @@ void test_variant() {
 	y = "xyz"s;
 	assert(std::holds_alternative<std::string>(y)); //succeeds
 }
+//std::variant有一个有趣的非成员函数std::visit，可以在变体列表上执行可调用对象。
+//可调用对象是可以调用的东西。通常，它可以是函数，函数对象或lambda表达式。为了简单起见，在此示例中，使用了lambda函数。
+void test_visit() {
+	std::vector<std::variant<char, long, float, int, double, long long>>
+		vecVariant = { 5, '2', 5.4, 100ll, 2011l, 3.5f, 2017 };
+
+	for (auto& v : vecVariant) {
+		std::visit([](auto&& arg) {std::cout << arg << " "; }, v);
+		// 5 2 5.4 100 2011 3.5 2017                
+	}
+	cout << std::endl;
+
+	// display each type
+	for (auto& v : vecVariant) {
+		std::visit([](auto&& arg) {std::cout << typeid(arg).name() << " "; }, v);
+		// i c d x l f i (these letters refer to int char double __int64 long float int respectively
+	}
+	cout << endl;
+
+	// get the sum
+	std::common_type<char, long, float, int, double, long long>::type res{};
+
+	std::cout << typeid(res).name() << std::endl;        // d (for double)
+
+	for (auto& v : vecVariant) {
+		std::visit([&res](auto&& arg) {res += arg; }, v);
+	}
+	std::cout << "res: " << res << std::endl;            // res: 4191.9
+
+	// double each value
+	for (auto& v : vecVariant) {
+		std::visit([&res](auto&& arg) {arg *= 2; }, v);
+		std::visit([](auto&& arg) {std::cout << arg << " "; }, v);
+		// 10 d 10.8 200 4022 7 4034
+	}
+}
 
 int main()
 {
